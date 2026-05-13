@@ -1481,8 +1481,8 @@ function end_func() {
     # indicator only.
     if [[ -n "${called_fn_dir:-}" ]]; then
         rm -f "$called_fn_dir/.inprogress_${fn}" 2>/dev/null || true
+        touch "$called_fn_dir/.${fn}" 2>/dev/null || true
     fi
-    touch "$called_fn_dir/.${fn}"
     local end
     end=$(date +%s)
     # Try per-function start time first (parallel-safe), fall back to global $start
@@ -1569,7 +1569,9 @@ function start_subfunc() {
 }
 
 function end_subfunc() {
-    touch "$called_fn_dir/.${2}"
+    if [[ -n "${called_fn_dir:-}" ]]; then
+        touch "$called_fn_dir/.${2}" 2>/dev/null || true
+    fi
     end_sub=$(date +%s)
     getElapsedTime "$start_sub" "$end_sub"
     local duration=$((end_sub - start_sub))
