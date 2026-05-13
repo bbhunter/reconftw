@@ -280,7 +280,7 @@ reconFTW is a comprehensive bash-based reconnaissance automation framework used 
 | Axiom/distributed mode | `axiom_launch`, `axiom_shutdown`, `axiom_selected`, `resolvers_update`, `ipcidr_target` | `modules/axiom.sh` |
 | Parallel execution | `parallel_funcs`, `_throttle_jobs`, job heartbeat, progress live display, log mode output | `lib/parallel.sh` |
 | Input validation/sanitization | `sanitize_domain`, `sanitize_ip`, `validate_domain`, `validate_integer`, `_sanitize_list_entry` | `lib/validation.sh` |
-| Shared file/counter utilities | `ensure_dirs`, `ensure_webs_all`, `safe_backup`, `count_lines`, `safe_count`, incident tracking | `lib/common.sh` |
+| Shared file/counter utilities | `ensure_dirs`, `ensure_webs_all`, `safe_backup`, `count_lines`, incident tracking | `lib/common.sh` |
 | UI presentation layer | `_print_status`, `_print_msg`, `_print_section`, `_print_rule`, `ui_header`, `ui_summary`, TTY detection, color management, JSONL output | `lib/ui.sh` |
 | Configuration | All runtime settings (~350 variables); sourced after CLI parse | `reconftw.cfg` |
 ## Pattern Overview

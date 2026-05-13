@@ -15,7 +15,7 @@ reconftw/
 │
 ├── lib/                     # Pure utility libraries (no recon logic)
 │   ├── validation.sh        # Input sanitization: sanitize_domain, sanitize_ip, validate_*
-│   ├── common.sh            # File/dir helpers, incident tracking, count_lines, safe_count
+│   ├── common.sh            # File/dir helpers, incident tracking, count_lines
 │   ├── ui.sh                # TTY detection, color management, _print_status/_print_msg, progress
 │   └── parallel.sh          # parallel_funcs, _throttle_jobs, live progress, job output modes
 │

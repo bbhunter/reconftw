@@ -200,7 +200,7 @@ The one-shot `-w` dispatch also sets `DIFF=true`, matching the global `DIFF=true
 - Replaced repetitive utility patterns with centralized helpers:
   - `ensure_dirs()`
   - `skip_notification()`
-  - `count_lines()`/`safe_count()`
+  - `count_lines()`
   - `run_tool()`
   - `should_run_function()`
 - Profile configuration behavior changed to override-only semantics (preserving preloaded secrets/env).

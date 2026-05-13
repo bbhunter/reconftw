@@ -159,11 +159,11 @@ if { [[ ! -f "$called_fn_dir/.${FUNCNAME[0]}" ]] || [[ $DIFF == true ]]; } && [[
 
 ## Error Handling
 
-**`safe_count()`** in `lib/common.sh` — always returns a valid integer:
+**`count_lines()`** in `lib/common.sh` — counts non-empty lines in a file; returns 0 if missing or empty:
 ```bash
-NUMOFLINES=$(safe_count "subdomains/subdomains.txt")   # preferred: direct file path
+NUMOFLINES=$(count_lines "subdomains/subdomains.txt")
 ```
-Falls back to `eval` for legacy pipeline strings (marked TODO for migration).
+For stdin-pipe inputs, use `count_lines_stdin` (e.g., `result=$(some_cmd | count_lines_stdin)`).
 
 **Return codes:** Functions return 0 on success, non-zero on failure. Error codes are defined as `readonly` in `reconftw.sh`:
 - `E_SUCCESS=0`, `E_GENERAL=1`, `E_MISSING_DEP=2`, `E_INVALID_INPUT=3`
