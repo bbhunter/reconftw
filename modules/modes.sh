@@ -13,6 +13,7 @@
 function start() {
 
     global_start=$(date +%s)
+    _RECON_CLEAN_EXIT=false  # CR-01 fix: gate _cleanup_inprogress so SIGINT/SIGTERM preserve .inprogress_* sentinels (D-02 clean-exit semantics)
     set +m 2>/dev/null || true
 
     # Validate configuration before starting

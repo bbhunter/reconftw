@@ -145,8 +145,13 @@ function cleanup_on_exit() {
     exit "$exit_code"
 }
 
-# Remove stale .inprogress_<fn> sentinels on EXIT (D-02). Does not call exit/kill/print — safe to fire on every shell exit, including successful runs.
+# Remove stale .inprogress_<fn> sentinels on EXIT (D-02 clean-exit-only).
+# Gated on _RECON_CLEAN_EXIT: only sweeps when the workflow's end() set the
+# flag (clean traversal). SIGINT/SIGTERM via cleanup_on_exit does NOT set the
+# flag, so the sentinel survives and the next run's resume banner fires
+# (CR-01 fix; closes SC1 indicator gap from 01-VERIFICATION.md).
 function _cleanup_inprogress() {
+    [[ "${_RECON_CLEAN_EXIT:-false}" == "true" ]] || return 0
     [[ -n "${called_fn_dir:-}" ]] && rm -f "${called_fn_dir}"/.inprogress_* 2>/dev/null
     return 0
 }
