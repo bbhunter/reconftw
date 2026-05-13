@@ -1417,6 +1417,9 @@ function sendToNotify {
 }
 
 function start_func() {
+    # Mid-run disk-full guard (D-07/D-09): abort BEFORE any state write so the
+    # Plan 01-01 EXIT trap clears .inprogress_* with no orphan for this function.
+    _check_disk_mid_run || _abort_disk_full
     local current_date
     current_date=$(date +'%Y-%m-%d %H:%M:%S')
     echo "[$current_date] Start function: ${1} " >>"${LOGFILE}"
@@ -1541,6 +1544,11 @@ function end_func() {
     if declare -F ui_log_jsonl >/dev/null 2>&1; then
         ui_log_jsonl "SUCCESS" "${fn}" "Function completed" "runtime=${runtime}" "duration_sec=${duration}"
     fi
+
+    # Post-checkpoint disk guard (D-07/D-09): runs AFTER .<fn> and .status_<fn>
+    # are durably written so the completed function leaves a full success record;
+    # abort here protects the NEXT function from running with no headroom.
+    _check_disk_mid_run || _abort_disk_full
 
     :
 }

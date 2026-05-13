@@ -441,6 +441,19 @@ function check_disk_space() {
     return 0
 }
 
+# Mid-run disk-full check: thin wrapper around check_disk_space using MIN_DISK_SPACE_GB (D-07/D-08).
+function _check_disk_mid_run() {
+    check_disk_space "${MIN_DISK_SPACE_GB:-5}" "${dir:-.}"
+    return $?
+}
+
+# Hard-abort the run on disk-full mid-run detection (D-09). EXIT trap (Plan 01-01) clears .inprogress_* on the way out.
+function _abort_disk_full() {
+    _print_error "disk_full: aborting (${DISK_SPACE_INFO:-disk space exhausted})"
+    log_json "ERROR" "${FUNCNAME[1]:-main}" "Disk space exhausted" "reason=disk_full" "info=${DISK_SPACE_INFO:-unknown}"
+    exit 1
+}
+
 # Show progress bar for operations
 # Usage: progress_bar <current> <total> <message>
 function progress_bar() {

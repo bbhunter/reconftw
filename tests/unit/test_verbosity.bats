@@ -36,6 +36,9 @@ setup() {
     getElapsedTime() { runtime="0s"; }
     record_func_timing() { :; }
     log_json() { :; }
+    # Stubs for disk-full guard helpers (Plan 01-02) sourced from modules/utils.sh
+    _check_disk_mid_run() { return 0; }
+    _abort_disk_full() { return 0; }
 
     # Source common.sh (skip re-source guard)
     _COMMON_SH_LOADED=""
