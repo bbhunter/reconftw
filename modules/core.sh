@@ -1429,9 +1429,11 @@ function start_func() {
     # Keep global $start for backward compat (serial mode)
     start=$(date +%s)
     # Resume sentinel (RESIL-01 / D-01): touch .inprogress_<fn> as a crash-leftover
-    # marker. end_func removes it before touching .<fn>; EXIT trap clears it on
-    # graceful exit. A leftover on the next run signals the function was killed
-    # mid-execution and must re-run.
+    # marker. end_func removes it before touching .<fn>. The EXIT trap clears it
+    # ONLY when end() sets _RECON_CLEAN_EXIT=true (clean traversal). SIGINT/SIGTERM
+    # via cleanup_on_exit does NOT set the flag, so the sentinel survives and the
+    # next run's resume banner fires (CR-01 / SC1 fix; see modules/modes.sh start()
+    # and end() for the flag set/init points).
     if [[ -n "${called_fn_dir:-}" ]]; then
         touch "$called_fn_dir/.inprogress_${1}" 2>/dev/null || true
     fi
