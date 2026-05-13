@@ -34,20 +34,20 @@ Run one command, get a complete recon picture of a target — passive, active, a
 - ✓ **Pre-commit hygiene** — shellcheck + shfmt + semgrep enforced via hooks
 - ✓ **Comprehensive audit (2026-03)** — CLI override pattern unified, XSS in HTML report fixed, dead code removed, scope filter sed-escape, parallel-safe timing, transfer() opt-in gate
 - ✓ **UI overhaul** — Dot-fill status format, silent `start_func`, single-line dependency summaries, parallel group rebalancing
+- ✓ **Resilience: interrupted-run recovery** — `.inprogress_*` sentinel at `start_func`, rename to checkpoint at `end_func`, gated `_RECON_CLEAN_EXIT` clean-exit semantics so SIGINT/SIGTERM preserves the indicator (Phase 1 / RESIL-01 / 2026-05-13)
+- ✓ **Resilience: mid-run disk-full detection** — Boundary-only `df` check at `start_func`/`end_func` + `_abort_disk_full` with structured ENOSPC error (Phase 1 / RESIL-02 / 2026-05-13)
+- ✓ **Resilience: per-job timeout in `parallel_funcs`** — `PARALLEL_JOB_TIMEOUT_SECONDS` enforcement decoupled from verbosity gate; `_kill_tree` walks `pgrep -P` children-first so the underlying tool dies, not just the wrapper (Phase 1 / RESIL-03 / 2026-05-13)
+- ✓ **Perf: DNS timeout defaults** — `DNS_BRUTE_TIMEOUT=6h`, `DNS_RESOLVE_TIMEOUT=4h` defaults shipped in `reconftw.cfg`; `_run_dns_with_heartbeat` honors them (Phase 1 / PERF-02 / 2026-05-13)
 
 ### Active
 
 <!-- Audit-surfaced improvements being driven through the next milestone. -->
 
-- [ ] **Resilience: interrupted-run recovery** — `.inprogress_*` sentinel at `start_func`, rename to checkpoint at `end_func` so resume detects incomplete functions instead of restarting expensive runs
-- [ ] **Resilience: mid-run disk-full detection** — Periodic `df` check in long subdomain/DNS loops + trap on `ENOSPC` write failures
-- [ ] **Resilience: per-job timeout in `parallel_funcs`** — `PARALLEL_JOB_TIMEOUT_SECONDS` killing stuck jobs with `kill -TERM`
 - [ ] **Security: remove `eval` fallback in `safe_count()`** — Migrate remaining callers to file-path form, delete the `else` branch in `lib/common.sh:760`
 - [ ] **Security: tighten Discord/Slack curl quoting** — Quote `$discord_url`, `${slack_channel}`, filename args in `modules/core.sh:1410-1414`
 - [ ] **Security: `AXIOM_EXTRA_ARGS` array refactor** — Replace word-splitting on bare `$AXIOM_EXTRA_ARGS` with `AXIOM_EXTRA_ARGS_ARR=()` across `modules/subdomains.sh` and `modules/web.sh`
 - [ ] **Security: installer SHA256 verification** — Call `verify_sha256()` against rustup/uv bootstrappers; add re-pinned versions for stability-critical Go tools (nuclei, httpx, ffuf, puredns, subfinder)
 - [ ] **Perf: thread-count upper bounds** — Add `FFUF_THREADS_MAX`, `HTTPX_THREADS_MAX`, `DALFOX_THREADS_MAX` caps so multi-core scaling does not overwhelm targets or hit FD limits
-- [ ] **Perf: DNS timeout defaults** — Set `DNS_BRUTE_TIMEOUT=6h`, `DNS_RESOLVE_TIMEOUT=4h` defaults instead of `0` (disabled)
 - [ ] **Test coverage: `parallel_funcs` batch behaviour** — Tests for barrier sync, heartbeat polling, failure counter propagation
 - [ ] **Test coverage: end-to-end module pipelines** — Mocked integration between subdomains → web → vulns to catch handoff regressions
 - [ ] **Test coverage: axiom failover path** — `axiom_disable_runtime` invocation, partial-fleet fallback, host-key auto-repair
@@ -119,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-13 after initialization*
+*Last updated: 2026-05-13 after Phase 1 (Resilient Resume & Timeout Safety) completion*
