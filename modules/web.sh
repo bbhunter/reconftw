@@ -141,18 +141,9 @@ function webprobe_full() {
         local probe_out=".tmp/web_full_info_probe.txt"
         local common_json_tmp=".tmp/web_full_info_common_current.txt"
         local uncommon_json_tmp=".tmp/web_full_info_uncommon_current.txt"
-        local -a axiom_extra_args=()
-
         : >"$probe_out" 2>/dev/null || true
         : >"$common_json_tmp" 2>/dev/null || true
         : >"$uncommon_json_tmp" 2>/dev/null || true
-
-        if [[ $AXIOM == true ]] && [[ -n "${AXIOM_EXTRA_ARGS:-}" ]]; then
-            local _ifs="$IFS"
-            IFS=' '
-            read -r -a axiom_extra_args <<<"$AXIOM_EXTRA_ARGS"
-            IFS="$_ifs"
-        fi
 
         if [[ $AXIOM != true ]]; then
             local -a httpx_cmd=(
@@ -196,8 +187,8 @@ function webprobe_full() {
                 -json
                 -o "$probe_out"
             )
-            if [[ ${#axiom_extra_args[@]} -gt 0 ]]; then
-                axiom_cmd+=("${axiom_extra_args[@]}")
+            if [[ ${#AXIOM_EXTRA_ARGS_ARR[@]} -gt 0 ]]; then
+                axiom_cmd+=("${AXIOM_EXTRA_ARGS_ARR[@]}")
             fi
             run_command "${axiom_cmd[@]}" 2>>"$LOGFILE" >/dev/null
         fi
@@ -337,7 +328,7 @@ function screenshot() {
             fi
         else
             if [[ -s "webs/webs_all.txt" ]]; then
-                run_command axiom-scan webs/webs_all.txt -m nuclei-screenshots -o screenshots "$AXIOM_EXTRA_ARGS" 2>>"$LOGFILE" >/dev/null
+                run_command axiom-scan webs/webs_all.txt -m nuclei-screenshots -o screenshots "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
             fi
         fi
         end_func "Results are saved in $domain/screenshots" "${FUNCNAME[0]}"
@@ -428,7 +419,7 @@ function tls_ip_pivots() {
                 -p "$tls_ports" \
                 -c "$TLSX_THREADS" \
                 -json \
-                -o hosts/tls_ip_certs.jsonl $AXIOM_EXTRA_ARGS 2>>"$LOGFILE" >/dev/null
+                -o hosts/tls_ip_certs.jsonl "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
         fi
 
         # Extract hostnames from SAN/CN in JSONL
@@ -503,7 +494,7 @@ function tls_ip_pivots() {
                 run_command axiom-scan subdomains/tls_ip_pivots.txt -m puredns-resolve \
                     -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                     --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
-                    -o .tmp/tls_ip_pivots_resolved.txt "$AXIOM_EXTRA_ARGS" 2>>"$LOGFILE" >/dev/null
+                    -o .tmp/tls_ip_pivots_resolved.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
             fi
 
             if [[ -s ".tmp/tls_ip_pivots_resolved.txt" ]]; then
@@ -783,7 +774,7 @@ function portscan() {
                 else
                     if [[ -s ".tmp/ips_nocdn.txt" ]]; then
                         run_command axiom-scan .tmp/ips_nocdn.txt -m nmapx "${portscan_opts[@]}" \
-                            -oA hosts/portscan_active "$AXIOM_EXTRA_ARGS" 2>>"$LOGFILE" >/dev/null
+                            -oA hosts/portscan_active "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
                     fi
                 fi
             fi
@@ -1005,7 +996,7 @@ function waf_checks() {
 	                fi
 	            else
 	                # Run axiom-scan with wafw00f module on webs_all.txt
-	                run_command axiom-scan "webs/webs_all.txt" -m wafw00f -o ".tmp/wafs.txt" "$AXIOM_EXTRA_ARGS" 2>>"$LOGFILE" >/dev/null
+	                run_command axiom-scan "webs/webs_all.txt" -m wafw00f -o ".tmp/wafs.txt" "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
 	            fi
 
 	            # Process wafs.txt if it exists and is not empty
@@ -1149,7 +1140,7 @@ _nuclei_scan_axiom() {
     run_with_heartbeat "axiom nuclei" axiom-scan .tmp/webs_subs.txt -m nuclei \
         --nuclei-templates "$NUCLEI_TEMPLATES_PATH" \
         -severity "$all_severities" -nh -rl "$NUCLEI_RATELIMIT" \
-        -silent -retries 2 $NUCLEI_EXTRA_ARGS -j -o ".tmp/nuclei_combined_json.txt" "$AXIOM_EXTRA_ARGS"
+        -silent -retries 2 $NUCLEI_EXTRA_ARGS -j -o ".tmp/nuclei_combined_json.txt" "${AXIOM_EXTRA_ARGS_ARR[@]}"
 
     # Split combined results into per-severity files for backward compatibility
     _nuclei_split_by_severity
@@ -1534,7 +1525,7 @@ _fuzz_run_local() {
 # Run ffuf via axiom-scan and parse per-subdomain results
 _fuzz_run_axiom() {
     cached_download_typed "${fuzzing_remote_list}" ".tmp/fuzzing_remote_list.txt" "onelistforallmicro.txt" "wordlists"
-    run_with_heartbeat "axiom ffuf" axiom-scan webs/webs_all.txt -m ffuf -wL .tmp/fuzzing_remote_list.txt -H "${HEADER}" "$FFUF_FLAGS" -s -maxtime "$FFUF_MAXTIME" -oJ "$dir/.tmp/ffuf-content.json" "$AXIOM_EXTRA_ARGS"
+    run_with_heartbeat "axiom ffuf" axiom-scan webs/webs_all.txt -m ffuf -wL .tmp/fuzzing_remote_list.txt -H "${HEADER}" "$FFUF_FLAGS" -s -maxtime "$FFUF_MAXTIME" -oJ "$dir/.tmp/ffuf-content.json" "${AXIOM_EXTRA_ARGS_ARR[@]}"
 
     while read -r sub; do
         local sub_out
@@ -1985,9 +1976,9 @@ function urlchecks() {
                 if [[ $diff_webs != "0" ]] || [[ ! -s ".tmp/katana.txt" ]]; then
                     if [[ $URL_CHECK_ACTIVE == true ]]; then
                         if [[ $DEEP == true ]]; then
-                            run_with_heartbeat "axiom katana (deep)" axiom-scan webs/webs_all.txt -m katana $katana_headless_flags -jc -kf all -d 3 -fs rdn --max-runtime 4h -o .tmp/katana.txt "$AXIOM_EXTRA_ARGS"
+                            run_with_heartbeat "axiom katana (deep)" axiom-scan webs/webs_all.txt -m katana $katana_headless_flags -jc -kf all -d 3 -fs rdn --max-runtime 4h -o .tmp/katana.txt "${AXIOM_EXTRA_ARGS_ARR[@]}"
                         else
-                            run_with_heartbeat "axiom katana" axiom-scan webs/webs_all.txt -m katana $katana_headless_flags -jc -kf all -d 2 -fs rdn --max-runtime 3h -o .tmp/katana.txt "$AXIOM_EXTRA_ARGS"
+                            run_with_heartbeat "axiom katana" axiom-scan webs/webs_all.txt -m katana $katana_headless_flags -jc -kf all -d 2 -fs rdn --max-runtime 3h -o .tmp/katana.txt "${AXIOM_EXTRA_ARGS_ARR[@]}"
                         fi
                     fi
                 fi
@@ -2254,7 +2245,7 @@ function jschecks() {
                     | grep -F "$domain" \
                     | grep -aEo 'https?://[^ ]+' | anew -q .tmp/subjslinks.txt || true
             else
-                run_command axiom-scan .tmp/url_extract_js.txt -m subjs -o .tmp/subjslinks.txt "$AXIOM_EXTRA_ARGS" 2>>"$LOGFILE" >/dev/null
+                run_command axiom-scan .tmp/url_extract_js.txt -m subjs -o .tmp/subjslinks.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
             fi
 
                 if [[ -s ".tmp/subjslinks.txt" ]]; then
@@ -2277,7 +2268,7 @@ function jschecks() {
 	                if [[ -s "js/url_extract_js.txt" ]]; then
 	                    run_command axiom-scan js/url_extract_js.txt -m httpx -follow-host-redirects -H "$HEADER" -status-code \
 	                        -threads "$HTTPX_THREADS" -rl "$HTTPX_RATELIMIT" -timeout "$HTTPX_TIMEOUT" -silent \
-	                        -content-type -retries 2 -no-color -o .tmp/js_livelinks.txt "$AXIOM_EXTRA_ARGS" 2>>"$LOGFILE" >/dev/null
+	                        -content-type -retries 2 -no-color -o .tmp/js_livelinks.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
 	                    if [[ -s ".tmp/js_livelinks.txt" ]]; then
 	                        awk '/\\[200\\]/ && /javascript/ {print $1}' .tmp/js_livelinks.txt | anew -q js/js_livelinks.txt || true
 	                    fi
@@ -2338,7 +2329,7 @@ function jschecks() {
                     cat js/js_livelinks.txt | mantra -ua \"$HEADER\" -s | anew -q js/js_secrets.txt 2>>"$LOGFILE" >/dev/null || true
                 else
                     axiom-exec "go install github.com/Brosck/mantra@latest" 2>>"$LOGFILE" >/dev/null
-                    run_command axiom-scan js/js_livelinks.txt -m mantra -ua "$HEADER" -s -o js/js_secrets.txt "$AXIOM_EXTRA_ARGS" &>/dev/null
+                    run_command axiom-scan js/js_livelinks.txt -m mantra -ua "$HEADER" -s -o js/js_secrets.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" &>/dev/null
                 fi
                 mkdir -p .tmp/sourcemapper/secrets
                 if [[ -s "js/js_secrets.txt" ]]; then
@@ -2476,7 +2467,7 @@ function sub_js_extract() {
                 run_command axiom-scan .tmp/js_extracted_hosts_new.txt -m puredns-resolve \
                     -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                     --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
-                    -o .tmp/js_extracted_hosts_resolved.txt "$AXIOM_EXTRA_ARGS" 2>>"$LOGFILE" >/dev/null
+                    -o .tmp/js_extracted_hosts_resolved.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
             fi
 
             if [[ -s ".tmp/js_extracted_hosts_resolved.txt" ]]; then
@@ -2922,9 +2913,9 @@ function brokenLinks() {
                     # Use axiom-scan for scanning
                     if [[ ! -s ".tmp/katana.txt" ]]; then
                         if [[ $DEEP == true ]]; then
-                            run_command axiom-scan "webs/webs_all.txt" -m katana $katana_legacy_headless -jc -kf all -d 3 --max-runtime 4h -o ".tmp/katana.txt" $AXIOM_EXTRA_ARGS 2>>"$LOGFILE" >/dev/null
+                            run_command axiom-scan "webs/webs_all.txt" -m katana $katana_legacy_headless -jc -kf all -d 3 --max-runtime 4h -o ".tmp/katana.txt" "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
                         else
-                            run_command axiom-scan "webs/webs_all.txt" -m katana $katana_legacy_headless -jc -kf all -d 2 --max-runtime 3h -o ".tmp/katana.txt" $AXIOM_EXTRA_ARGS 2>>"$LOGFILE" >/dev/null
+                            run_command axiom-scan "webs/webs_all.txt" -m katana $katana_legacy_headless -jc -kf all -d 2 --max-runtime 3h -o ".tmp/katana.txt" "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
                         fi
                         # Remove lines longer than 2048 characters
                         if [[ -s ".tmp/katana.txt" ]]; then

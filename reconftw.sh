@@ -118,6 +118,19 @@ function normalize_vps_count_args() {
     printf '%s\0' "${normalized_args[@]}"
 }
 
+# Initialise AXIOM_EXTRA_ARGS_ARR from the current environment value so that
+# --source-only callers (unit tests) can rely on the array without running the
+# full config-source sequence.  The canonical production parse re-runs below
+# after reconftw.cfg + secrets.cfg + CUSTOM_CONFIG are sourced (overwriting this).
+declare -a AXIOM_EXTRA_ARGS_ARR=()
+if [[ -n "${AXIOM_EXTRA_ARGS:-}" ]]; then
+    _axiom_ifs_saved="$IFS"
+    IFS=' '
+    read -r -a AXIOM_EXTRA_ARGS_ARR <<<"${AXIOM_EXTRA_ARGS}"
+    IFS="$_axiom_ifs_saved"
+    unset _axiom_ifs_saved
+fi
+
 # Allow sourcing functions without execution (for testing)
 # Must be checked before argument parsing to avoid side effects
 if [[ "${1:-}" == "--source-only" ]]; then
@@ -508,6 +521,18 @@ if [[ -s $CUSTOM_CONFIG ]]; then
         _print_error "Error importing custom config"
         exit 1
     }
+fi
+
+# Global parse of AXIOM_EXTRA_ARGS once after config load — single source of truth.
+# Consumed via "${AXIOM_EXTRA_ARGS_ARR[@]}" in modules/subdomains.sh and modules/web.sh.
+# Empty/unset env → empty array → expands to nothing at the call sites.
+declare -a AXIOM_EXTRA_ARGS_ARR=()
+if [[ -n "${AXIOM_EXTRA_ARGS:-}" ]]; then
+    _axiom_ifs_saved="$IFS"
+    IFS=' '
+    read -r -a AXIOM_EXTRA_ARGS_ARR <<<"${AXIOM_EXTRA_ARGS}"
+    IFS="$_axiom_ifs_saved"
+    unset _axiom_ifs_saved
 fi
 
 # Re-apply CLI overrides after config load (config defaults should not clobber CLI flags)
