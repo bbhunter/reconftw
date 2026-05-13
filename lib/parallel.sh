@@ -41,6 +41,30 @@ _throttle_jobs() {
     done
 }
 
+# Recursively signal a process and all its descendants. Used by
+# _timeout_kill_job to kill the actual external tool (puredns, dnsx, ffuf,
+# axiom-scan, etc.) inside the parallel_funcs wrapper subshell, not just
+# the wrapper itself (CR-03 fix). Walks the process tree via `pgrep -P`
+# which is available on both Linux (procps) and macOS (BSD pgrep). If
+# pgrep is missing on the host, the walk degrades gracefully to a
+# wrapper-only kill (matches pre-patch behavior) so the run does not fail.
+# Process-group kill via `kill -- -<pgid>` was rejected because start() at
+# modules/modes.sh:16 explicitly disables job control (`set +m`), so the
+# wrapper subshell does not get its own pgid; flipping `set -m` for one
+# corner case is intrusive across the codebase.
+function _kill_tree() {
+    local parent="$1" sig="${2:-TERM}"
+    local child
+    # Recurse into children first so deeper leaves get signaled before the
+    # parent — protects against a parent re-spawning children on signal.
+    if command -v pgrep >/dev/null 2>&1; then
+        for child in $(pgrep -P "$parent" 2>/dev/null); do
+            _kill_tree "$child" "$sig"
+        done
+    fi
+    kill "-$sig" "$parent" 2>/dev/null || true
+}
+
 # Kill a parallel job that has exceeded PARALLEL_JOB_TIMEOUT_SECONDS.
 # Usage: _timeout_kill_job <pid> <func_name> <duration_sec>
 # Sends SIGTERM, polls every second up to PARALLEL_KILL_GRACE_SECONDS, then SIGKILL
@@ -56,13 +80,17 @@ function _timeout_kill_job() {
     [[ "$grace" =~ ^[0-9]+$ ]] || grace=10
 
     # D-13: TERM first, then KILL after grace seconds for tools that ignore TERM.
-    kill -TERM "$pid" 2>/dev/null || true
+    # CR-03 fix: kill the entire process tree under the wrapper PID so the actual
+    # external tool (puredns, dnsx, ffuf, axiom-scan, etc.) terminates — not just
+    # the wrapper subshell. Pre-patch behavior signaled only $pid (the wrapper),
+    # leaving the tool orphaned to PID 1 and continuing past the timeout.
+    _kill_tree "$pid" TERM
     local i
     for ((i=0; i<grace; i++)); do
         kill -0 "$pid" 2>/dev/null || break
         sleep 1
     done
-    kill -KILL "$pid" 2>/dev/null || true
+    _kill_tree "$pid" KILL
 
     # D-14: persist FAIL + reason=timeout via the same pattern as modules/core.sh:1505-1509.
     if [[ -n "${called_fn_dir:-}" ]]; then
