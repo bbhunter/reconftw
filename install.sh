@@ -519,15 +519,43 @@ function install_tools() {
     export GOFLAGS="-mod=mod"
     export GO111MODULE="on"
 
+    # Load optional tool pins from ./tools.lock (D-12 / SEC-04).
+    # Each line: <binary>=<module>@<version>. Comments (#) and blank lines ignored.
+    # If a tool listed here is also in $gotools, the lock entry wins; otherwise
+    # `go install @latest` is used. Errors loading tools.lock are non-fatal.
+    declare -A pinned_tools=()
+    local _lockfile="${SCRIPTPATH:-$(pwd)}/tools.lock"
+    if [[ -f "$_lockfile" ]]; then
+        local _key _val
+        while IFS='=' read -r _key _val; do
+            # Strip surrounding whitespace; skip blanks/comments
+            _key="${_key#"${_key%%[![:space:]]*}"}"
+            _key="${_key%"${_key##*[![:space:]]}"}"
+            [[ -z "$_key" || "$_key" == \#* ]] && continue
+            _val="${_val#"${_val%%[![:space:]]*}"}"
+            _val="${_val%"${_val##*[![:space:]]}"}"
+            [[ -z "$_val" ]] && continue
+            pinned_tools["$_key"]="$_val"
+        done < "$_lockfile"
+        msg_ok "Loaded ${#pinned_tools[@]} pin(s) from tools.lock"
+    fi
+
     local go_step=0
     local failed_tools=()
     local total_go=${#gotools[@]}
     local go_ok=0 go_skip=0 go_fail=0
     for gotool in "${!gotools[@]}"; do
         ((++go_step))
+        # Pinned version wins; otherwise fall through to @latest.
+        local _module_at_version
+        if [[ -n "${pinned_tools[$gotool]:-}" ]]; then
+            _module_at_version="${pinned_tools[$gotool]}"
+        else
+            _module_at_version="${gotools[$gotool]}@latest"
+        fi
         # Always run go install so already-present binaries also get updated.
         # argv form (not bash -lc) so arr values are data, not shell syntax.
-        if q go install -v "${gotools[$gotool]}@latest"; then
+        if q go install -v "$_module_at_version"; then
             ((++go_ok))
             msg_ok "[$go_step/$total_go] ${gotool} installed"
         else

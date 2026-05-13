@@ -1,0 +1,12 @@
+# tools.lock — pinned Go tool versions for stability-critical tools.
+# Format: <binary>=<go-module>@<version>
+# - Comment lines start with '#'
+# - Blank lines tolerated
+# - Tools not listed here fall through to `go install <module>@latest` in install.sh
+# - Update by running `go install <module>@latest` once and recording the resolved tag
+
+nuclei=github.com/projectdiscovery/nuclei/v3/cmd/nuclei@v3.8.0
+httpx=github.com/projectdiscovery/httpx/cmd/httpx@v1.9.0
+ffuf=github.com/ffuf/ffuf/v2@v2.1.0
+puredns=github.com/d3mondev/puredns/v2@v2.1.1
+subfinder=github.com/projectdiscovery/subfinder/v2/cmd/subfinder@v2.14.0
