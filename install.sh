@@ -158,10 +158,23 @@ ensure_git_dir() {
 # Called from install_apt/install_yum/install_pacman/install_brew to avoid duplication.
 install_rust_uv() {
     local _tmpfile
+    local _expected
     # Install rustup via downloaded script (verify before executing)
     _tmpfile=$(mktemp "${TMPDIR:-/tmp}/rustup_install.XXXXXX")
     if curl -sSf https://sh.rustup.rs -o "$_tmpfile" 2>/dev/null; then
-        sh "$_tmpfile" -y >/dev/null 2>&1
+        _expected="${RUSTUP_INSTALLER_SHA256:-}"
+        if [[ -n "$_expected" ]]; then
+            if verify_sha256 "$_tmpfile" "$_expected"; then
+                msg_ok "[!] rustup installer sha256 verified"
+                sh "$_tmpfile" -y >/dev/null 2>&1
+            else
+                msg_err "[!] rustup installer sha256 mismatch; refusing to execute"
+                rm -f "$_tmpfile"
+                return 1
+            fi
+        else
+            sh "$_tmpfile" -y >/dev/null 2>&1
+        fi
     else
         msg_warn "[!] Failed to download rustup installer"
     fi
@@ -174,7 +187,19 @@ install_rust_uv() {
     # Install uv via downloaded script (verify before executing)
     _tmpfile=$(mktemp "${TMPDIR:-/tmp}/uv_install.XXXXXX")
     if curl -LsSf https://astral.sh/uv/install.sh -o "$_tmpfile" 2>/dev/null; then
-        sh "$_tmpfile" &>/dev/null
+        _expected="${UV_INSTALLER_SHA256:-}"
+        if [[ -n "$_expected" ]]; then
+            if verify_sha256 "$_tmpfile" "$_expected"; then
+                msg_ok "[!] uv installer sha256 verified"
+                sh "$_tmpfile" &>/dev/null
+            else
+                msg_err "[!] uv installer sha256 mismatch; refusing to execute"
+                rm -f "$_tmpfile"
+                return 1
+            fi
+        else
+            sh "$_tmpfile" &>/dev/null
+        fi
     else
         msg_warn "[!] Failed to download uv installer"
     fi
@@ -1234,6 +1259,8 @@ function initial_setup() {
     # install.sh:
     #     export GETJSWORDS_SHA256=<64 hex chars>
     #     export AXIOM_CONFIG_SHA256=<64 hex chars>
+    #     export RUSTUP_INSTALLER_SHA256=<64 hex chars>   # rustup-init.sh from https://sh.rustup.rs
+    #     export UV_INSTALLER_SHA256=<64 hex chars>       # uv installer from https://astral.sh/uv/install.sh
     # If set, each download is verified with `verify_sha256` and the install
     # aborts on mismatch. If unset the previous upstream-trusting behaviour is
     # preserved for backwards compatibility.
