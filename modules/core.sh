@@ -1385,10 +1385,10 @@ function transfer {
 }
 
 function sendToNotify {
-    if [[ -z $1 ]]; then
+    if [[ -z "${1}" ]]; then
         _print_status WARN "No file provided to send"
     else
-        if [[ -z $NOTIFY_CONFIG ]]; then
+        if [[ -z "${NOTIFY_CONFIG}" ]]; then
             NOTIFY_CONFIG=~/.config/notify/provider-config.yaml
         fi
         if [[ -n "$(find "${1}" -prune -size +8000000c)" ]]; then
@@ -1396,22 +1396,22 @@ function sendToNotify {
             transfer "${1}" | notify -silent
             return 0
         fi
-        if grep -q '^ telegram\|^telegram\|^    telegram' $NOTIFY_CONFIG; then
+        if grep -q '^ telegram\|^telegram\|^    telegram' "${NOTIFY_CONFIG}"; then
             notification "Sending ${domain} data over Telegram" info
-            telegram_chat_id=$(sed -n '/^telegram:/,/^[^ ]/p' ${NOTIFY_CONFIG} | sed -n 's/^[ ]*telegram_chat_id:[ ]*"\([^"]*\)".*/\1/p')
-            telegram_key=$(sed -n '/^telegram:/,/^[^ ]/p' ${NOTIFY_CONFIG} | sed -n 's/^[ ]*telegram_api_key:[ ]*"\([^"]*\)".*/\1/p')
-            register_secret "$telegram_key"
-            run_command curl -F "chat_id=${telegram_chat_id}" -F "document=@${1}" https://api.telegram.org/bot${telegram_key}/sendDocument 2>>"$LOGFILE" >/dev/null
+            telegram_chat_id=$(sed -n '/^telegram:/,/^[^ ]/p' "${NOTIFY_CONFIG}" | sed -n 's/^[ ]*telegram_chat_id:[ ]*"\([^"]*\)".*/\1/p')
+            telegram_key=$(sed -n '/^telegram:/,/^[^ ]/p' "${NOTIFY_CONFIG}" | sed -n 's/^[ ]*telegram_api_key:[ ]*"\([^"]*\)".*/\1/p')
+            register_secret "${telegram_key}"
+            run_command curl -F "chat_id=${telegram_chat_id}" -F "document=@${1}" "https://api.telegram.org/bot${telegram_key}/sendDocument" 2>>"$LOGFILE" >/dev/null
         fi
-        if grep -q '^ discord\|^discord\|^    discord' $NOTIFY_CONFIG; then
+        if grep -q '^ discord\|^discord\|^    discord' "${NOTIFY_CONFIG}"; then
             notification "Sending ${domain} data over Discord" info
-            discord_url=$(sed -n '/^discord:/,/^[^ ]/p' ${NOTIFY_CONFIG} | sed -n 's/^[ ]*discord_webhook_url:[ ]*"\([^"]*\)".*/\1/p')
-            register_secret "$discord_url"
-            run_command curl -v -i -H "Accept: application/json" -H "Content-Type: multipart/form-data" -X POST -F 'payload_json={"username": "test", "content": "hello"}' -F file1=@${1} $discord_url 2>>"$LOGFILE" >/dev/null
+            discord_url=$(sed -n '/^discord:/,/^[^ ]/p' "${NOTIFY_CONFIG}" | sed -n 's/^[ ]*discord_webhook_url:[ ]*"\([^"]*\)".*/\1/p')
+            register_secret "${discord_url}"
+            run_command curl -v -i -H "Accept: application/json" -H "Content-Type: multipart/form-data" -X POST -F 'payload_json={"username": "test", "content": "hello"}' -F "file1=@${1}" "${discord_url}" 2>>"$LOGFILE" >/dev/null
         fi
-        if [[ -n $slack_channel ]] && [[ -n $slack_auth ]]; then
+        if [[ -n "${slack_channel}" ]] && [[ -n "${slack_auth}" ]]; then
             notification "Sending ${domain} data over Slack" info
-            run_command curl -F file=@${1} -F "initial_comment=reconftw zip file" -F channels=${slack_channel} -H "Authorization: Bearer ${slack_auth}" https://slack.com/api/files.upload 2>>"$LOGFILE" >/dev/null
+            run_command curl -F "file=@${1}" -F "initial_comment=reconftw zip file" -F "channels=${slack_channel}" -H "Authorization: Bearer ${slack_auth}" https://slack.com/api/files.upload 2>>"$LOGFILE" >/dev/null
         fi
     fi
 }
