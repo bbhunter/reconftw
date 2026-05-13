@@ -665,8 +665,8 @@ function sub_active() {
             # Resolve subdomains using axiom-scan
             if [[ -s ".tmp/subs_no_resolved.txt" ]]; then
                 run_command axiom-scan .tmp/subs_no_resolved.txt -m puredns-resolve \
-                    -r ${AXIOM_RESOLVERS_PATH} \
-                    --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                    -r "${AXIOM_RESOLVERS_PATH}" \
+                    --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                     --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" \
                     --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                     -o .tmp/subdomains_tmp.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" \
@@ -763,7 +763,7 @@ function sub_tls() {
         else
             if [[ -s ".tmp/subdomains_tlsx_clean.txt" ]]; then
                 run_command axiom-scan .tmp/subdomains_tlsx_clean.txt -m puredns-resolve \
-                    -r ${AXIOM_RESOLVERS_PATH} --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                    -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                     --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                     -o .tmp/subdomains_tlsx_resolved.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" \
                     2>>"$LOGFILE" >/dev/null
@@ -1094,8 +1094,8 @@ function sub_brute() {
             [[ $DEEP == true ]] && wordlist="$subs_wordlist_big"
 
             # Run axiom-scan with puredns-single
-            run_command axiom-scan "$wordlist" -m puredns-single "$domain" -r ${AXIOM_RESOLVERS_PATH} \
-                --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+            run_command axiom-scan "$wordlist" -m puredns-single "$domain" -r "${AXIOM_RESOLVERS_PATH}" \
+                --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                 --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                 -o .tmp/subs_brute.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
 
@@ -1361,7 +1361,7 @@ function sub_analytics() {
 
                     if [[ -s ".tmp/analytics_subs_clean.txt" ]]; then
                         run_command axiom-scan .tmp/analytics_subs_clean.txt -m puredns-resolve \
-                            -r ${AXIOM_RESOLVERS_PATH} --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                            -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                             --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                             -o .tmp/analytics_subs_resolved.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" \
                             2>>"$LOGFILE" >/dev/null
@@ -1661,7 +1661,7 @@ function sub_regex_permut() {
 
             if [[ -s ".tmp/${domain}.brute" ]]; then
                 run_command axiom-scan ".tmp/${domain}.brute" -m puredns-resolve \
-                    -r ${AXIOM_RESOLVERS_PATH} --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                    -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                     --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                     -o .tmp/regulator.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" \
                     2>>"$LOGFILE" >/dev/null
@@ -1737,7 +1737,7 @@ function sub_ia_permut() {
 
             if [[ -s ".tmp/subwiz.txt" ]]; then
                 run_command axiom-scan ".tmp/subwiz.txt" -m puredns-resolve \
-                    -r ${AXIOM_RESOLVERS_PATH} --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                    -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                     --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                     -o .tmp/subwiz_resolved.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" \
                     2>>"$LOGFILE" >/dev/null
@@ -1833,7 +1833,7 @@ function sub_recursive_passive() {
 
             if [[ -s ".tmp/passive_recursive.txt" ]]; then
                 run_command axiom-scan .tmp/passive_recursive.txt -m puredns-resolve \
-                    -r ${AXIOM_RESOLVERS_PATH} --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                    -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                     --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                     -o .tmp/passive_recurs_tmp.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" 2>>"$LOGFILE" >/dev/null
             fi
@@ -1900,7 +1900,7 @@ function sub_recursive_brute() {
                     _bruteforce_domains "$subs_wordlist" "$subdomain_top" .tmp/brute_recursive_result_part.txt
                 else
                     run_command axiom-scan "$subs_wordlist" -m puredns-single "$subdomain_top" \
-                        -r ${AXIOM_RESOLVERS_PATH} --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                        -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                         --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                         -o .tmp/brute_recursive_result_part.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" \
                         2>>"$LOGFILE" >/dev/null
@@ -1921,7 +1921,7 @@ function sub_recursive_brute() {
             else
                 if [[ -s ".tmp/gotator1_recursive.txt" ]]; then
                     run_command axiom-scan .tmp/gotator1_recursive.txt -m puredns-resolve \
-                        -r ${AXIOM_RESOLVERS_PATH} --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                        -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                         --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                         -o .tmp/permute1_recursive.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" \
                         2>>"$LOGFILE" >/dev/null
@@ -1939,7 +1939,7 @@ function sub_recursive_brute() {
             else
                 if [[ -s ".tmp/gotator2_recursive.txt" ]]; then
                     run_command axiom-scan .tmp/gotator2_recursive.txt -m puredns-resolve \
-                        -r ${AXIOM_RESOLVERS_PATH} --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                        -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                         --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                         -o .tmp/permute2_recursive.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" \
                         2>>"$LOGFILE" >/dev/null
@@ -1985,7 +1985,7 @@ function sub_recursive_brute() {
         else
             if [[ -s ".tmp/brute_perm_recursive.txt" ]]; then
                 run_command axiom-scan .tmp/brute_perm_recursive.txt -m puredns-resolve \
-                    -r ${AXIOM_RESOLVERS_PATH} --resolvers-trusted ${AXIOM_RESOLVERS_TRUSTED_PATH} \
+                    -r "${AXIOM_RESOLVERS_PATH}" --resolvers-trusted "${AXIOM_RESOLVERS_TRUSTED_PATH}" \
                     --wildcard-tests "$PUREDNS_WILDCARDTEST_LIMIT" --wildcard-batch "$PUREDNS_WILDCARDBATCH_LIMIT" \
                     -o .tmp/brute_perm_recursive_final.txt "${AXIOM_EXTRA_ARGS_ARR[@]}" \
                     2>>"$LOGFILE" >/dev/null
